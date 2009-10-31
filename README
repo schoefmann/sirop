@@ -5,6 +5,7 @@ with ferret into a tiny persistence layer for "Plain Old Ruby" objects.
 It uses as little "magic" metaprogramming tricks as possible.
 
 Example:
+
   require 'sirop'
   Sirop.setup! :db => {:size_mb => 1}
 

@@ -14,7 +14,6 @@ module Sirop
   
   # general config hash
   @@config = {}
-
   def self.config; @@config end
   
   def self.included(base)
@@ -33,14 +32,14 @@ module Sirop
 
     config[:path] = init_storage_dir(opts[:path])
   
-  	if config[:uuid] = opts[:uuid]
+    if config[:uuid] = opts[:uuid]
       require 'uuid'
       @@uuid = UUID.new
     else
       @@mx = Mutex.new
-  	end
-  	
-  	init_index(opts[:index] || {})
+    end
+    
+    init_index(opts[:index] || {})
     init_db(opts[:db] || {})
   end
   
@@ -54,16 +53,16 @@ module Sirop
   #
   # +domain+:: required unless UUIDs is used
   def self.next_sequence(domain = nil)
-  	if config[:uuid]
-  	  @@uuid.generate
-  	else
+    if config[:uuid]
+      @@uuid.generate
+    else
       key = "_seq_#{domain}"
       @@mx.synchronize do
         id = db.get(key).to_i + 1
         db.set(key, id.to_s)
         id
       end 
-  	end
+    end
   end
 
   # sets the marshaled +value+ for the +key+
@@ -100,13 +99,13 @@ module Sirop
         merge(:path => File.join(config[:path], 'index'),
               :key => :_doc_key, :id_field => :_doc_key))
 
-  	unless index.field_infos.fields.include?(:_doc_key)
-  	  index.field_infos.add_field(:_doc_key, :index => :untokenized_omit_norms, :store => :yes, :term_vector => :no)
-  	end
-  	
-  	unless index.field_infos.fields.include?(:id)
-  	  index.field_infos.add_field(:id, :index => :untokenized_omit_norms, :store => :no, :term_vector => :no)
-  	end
+    unless index.field_infos.fields.include?(:_doc_key)
+      index.field_infos.add_field(:_doc_key, :index => :untokenized_omit_norms, :store => :yes, :term_vector => :no)
+    end
+    
+    unless index.field_infos.fields.include?(:id)
+      index.field_infos.add_field(:id, :index => :untokenized_omit_norms, :store => :no, :term_vector => :no)
+    end
   end
 
   def self.init_db(db_opts)
@@ -133,13 +132,13 @@ module Sirop
     def save
       db_doc, idx_doc = { :id => id }, { :id => id, :_doc_key => doc_key, :_domain => self.class.domain }
       self.class.properties.each do |name, opts|
-      	value = opts[:lazy] ? send(name) : instance_variable_get("@#{name}")
+        value = opts[:lazy] ? send(name) : instance_variable_get("@#{name}")
         value = self.class.fold_association(value) if opts[:model]
-      	if opts[:lazy]
+        if opts[:lazy]
           Sirop.db_set("#{doc_key}/#{name}", value)
-      	else
+        else
           db_doc[name] = value
-      	end
+        end
         idx_doc[name] = value if opts[:index]
       end
       Sirop.db_set(doc_key, db_doc)
@@ -162,9 +161,9 @@ module Sirop
 
   module ClassMethods
   
-  	# returns all records
-  	# === Options:
-  	# +:limit+: a number or +:all* which is the default
+    # returns all records
+    # === Options:
+    # +:limit+: a number or +:all* which is the default
     def all(options = {})
       options[:limit] ||= :all
       # #scan is buggy in current master, se we use the slower search for now...
@@ -172,7 +171,7 @@ module Sirop
       Sirop.index.search("_domain:#{domain}", options).hits.map { |hit| get(resolve(hit.doc)) }
     end
   
-  	# Iterates through all records
+    # Iterates through all records
     def each
       Sirop.index.search_each("_domain:#{domain}") do |nr, score|
         yield get(resolve(nr))
@@ -192,7 +191,7 @@ module Sirop
       end
     end
 
-  	# Find the record with the given +id+ or multiple ids.
+    # Find the record with the given +id+ or multiple ids.
     # raises RecordNotFound
     def find(id)
       if id.respond_to?(:collect)
@@ -254,11 +253,11 @@ module Sirop
         index_opts = {} unless index_opts.kind_of?(Hash)
         unless Sirop.index.field_infos.fields.include?(name)
           Sirop.index.field_infos.add_field(name, {:store => :no}.merge(index_opts))
-	      end
+        end
       end
       
       if opts[:lazy]
-  	    define_lazy_attribute(name, opts.has_key?(:model))
+        define_lazy_attribute(name, opts.has_key?(:model))
       else
         attr_accessor name unless opts[:accessors] === false
       end
@@ -269,12 +268,12 @@ module Sirop
     end
     
     def domain
-	    Sirop.config[self][:domain]
+      Sirop.config[self][:domain]
     end
 
-	  # Sets the domain of the class. Useful when renaming models
+    # Sets the domain of the class. Useful when renaming models
     def domain=(new_domain)
-	    Sirop.config[self][:domain] = new_domain
+      Sirop.config[self][:domain] = new_domain
     end
     
     # +records+:: a single record or a collection of records
