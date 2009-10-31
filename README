@@ -1,0 +1,51 @@
+Sirop - "SIngle Require Object Persistence"
+
+This is a small experimental toy library which combines localmemcache
+with ferret into a tiny persistence layer for "Plain Old Ruby" objects.
+It uses as little "magic" metaprogramming tricks as possible.
+
+Example:
+  require 'sirop'
+  Sirop.setup! :db => {:size_mb => 1}
+
+  class Tag
+    include Sirop
+    property :name, :index => true
+  end
+
+  class Category
+    include Sirop
+    property :name
+  end
+
+  class Post
+    include Sirop
+    property :title, :index => true
+    property :content, :lazy => true, :index => true
+    property :category, :model => Category, :index => true
+    property :tags, :model => Tag, :index => true
+  end
+
+  category = Category.new; category.name = "Misc"; category.save
+
+  tag1 = Tag.new; tag1.name = "story"; tag1.save
+  tag2 = Tag.new; tag2.name = "stuff; tag2.save
+
+  post = Post.new
+  post.title = "First Post!"
+  post.content = "The lazy fox jumps over the quick brown dog"
+  post.category = category
+  post.tags = [tag1, tag2]
+  post.save
+
+  Post.search("tags: #{tag1.id}").each do |post|
+    puts post.title
+  end
+
+
+More examples in: ./examples/game.rb
+
+See also:
+
+* http://github.com/sck/localmemcache
+* http://github.com/dbalmain/ferret
